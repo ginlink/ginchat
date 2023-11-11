@@ -2,9 +2,10 @@ package controllers
 
 import (
 	"context"
-	"ginchat/configs"
 	"ginchat/models"
 	"ginchat/responses"
+	"ginchat/services"
+	"ginchat/utils"
 	"net/http"
 	"time"
 
@@ -15,7 +16,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-var userCollection *mongo.Collection = configs.GetCollection(configs.DB, "users")
+var userCollection *mongo.Collection = utils.GetCollection(utils.DB, "users")
 var validate = validator.New()
 
 func CreateUser() gin.HandlerFunc {
@@ -140,28 +141,18 @@ func DeleteAUser() gin.HandlerFunc {
 	}
 }
 
+// GetAllUsers
+// @Summary GetAll
+// @Tags User
+// @Success 200 {string} Helloworld
+// @Router /user [get]
 func GetAllUsers() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		var users []models.User
-		defer cancel()
-
-		results, err := userCollection.Find(ctx, bson.M{})
+		users, err := services.GetUserList()
 
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, responses.UserResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}})
 			return
-		}
-
-		//reading from the db in an optimal way
-		defer results.Close(ctx)
-		for results.Next(ctx) {
-			var singleUser models.User
-			if err = results.Decode(&singleUser); err != nil {
-				c.JSON(http.StatusInternalServerError, responses.UserResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}})
-			}
-
-			users = append(users, singleUser)
 		}
 
 		c.JSON(http.StatusOK,
