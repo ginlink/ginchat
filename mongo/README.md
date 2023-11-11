@@ -2,25 +2,35 @@
 
 docker-compose.yaml
 ```yaml
-version: '3.7'
+version: '3.8'
+
+networks:
+  common.network:
+    driver: bridge
+
 services:
   mongo1:
       image: mongo:5.0.18
       restart: always
+      networks:
+        common.network:
       ports:
         - 27017:27017
       volumes:
         - ./data/mongo1:/data/db
-      command: mongod --replSet "rs0" --bind_ip_all
+      entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "rs0" ]
 
   mongo2:
     image: mongo:5.0.18
     restart: always
+    networks:
+      common.network:
     ports:
       - 27018:27017
     volumes:
       - ./data/mongo2:/data/db
-    command: mongod --replSet "rs0" --bind_ip_all
+    entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "rs0" ]
+
 ```
 
 建立目录
@@ -45,16 +55,17 @@ docker-compose exec mongo1 bash
 
 mongo
 ```
-
-执行以下命令来配置复制集，注意ip
+设置集群
 ```sh
-rs.initiate({_id: "rs0", members: [
-  {_id: 0, host: "192.168.1.2:27017"},
-  {_id: 1, host: "192.168.1.2:27018"},
-]});
+rs.initiate({_id:'rs0', members: [{_id:0, host: 'mongo1'},{_id:1, host: 'mongo2'}]})
 ```
 
-链接uri
+设置hosts
 ```sh
-mongodb://192.168.1.2:27017,192.168.1.2:27018/test?replicaSet=rs0
+sudo vim /etc/hosts
+```
+粘贴以下内容
+```sh
+127.0.0.1       mongo1
+127.0.0.1       mongo2
 ```

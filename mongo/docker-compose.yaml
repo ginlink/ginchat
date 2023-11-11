@@ -1,19 +1,34 @@
-version: '3.7'
+version: '3.8'
+
+networks:
+  common.network:
+    driver: bridge
+
 services:
   mongo1:
       image: mongo:5.0.18
       restart: always
+      networks:
+        common.network:
       ports:
         - 27017:27017
       volumes:
         - ./data/mongo1:/data/db
-      command: mongod --replSet "rs0" --bind_ip_all
+      entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "rs0" ]
+      # environment:
+      # - MONGO_INITDB_ROOT_USERNAME=adminUser
+      # - MONGO_INITDB_ROOT_PASSWORD=adminPassword
 
   mongo2:
     image: mongo:5.0.18
     restart: always
+    networks:
+      common.network:
     ports:
       - 27018:27017
     volumes:
       - ./data/mongo2:/data/db
-    command: mongod --replSet "rs0" --bind_ip_all
+    entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "rs0" ]
+    # environment:
+    #   - MONGO_INITDB_ROOT_USERNAME=adminUser
+    #   - MONGO_INITDB_ROOT_PASSWORD=adminPassword
