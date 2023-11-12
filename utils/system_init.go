@@ -6,13 +6,14 @@ import (
 	"log"
 	"time"
 
+	"github.com/go-redis/redis/v8"
 	"github.com/spf13/viper"
 	"go.mongodb.org/mongo-driver/event"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func InitConfig() int {
+func InitConfig() bool {
 	viper.SetConfigName("app")
 	viper.AddConfigPath("./configs")
 	err := viper.ReadInConfig()
@@ -23,7 +24,7 @@ func InitConfig() int {
 
 	fmt.Println("init config success")
 
-	return 1
+	return true
 }
 
 func InitDB() *mongo.Client {
@@ -63,8 +64,29 @@ func InitDB() *mongo.Client {
 	return client
 }
 
+func InitRDB() *redis.Client {
+	fmt.Println("redis config:", viper.Get("redis"))
+	rdb := redis.NewClient(&redis.Options{
+		Addr:         viper.GetString("redis.addr"),
+		Password:     viper.GetString("redis.password"),
+		DB:           viper.GetInt("redis.db"),
+		PoolSize:     viper.GetInt("redis.poolSize"),
+		MinIdleConns: viper.GetInt("redis.minIdleConns"),
+	})
+
+	// 测试可用性
+	pong, err := rdb.Ping(context.TODO()).Result()
+	if err != nil {
+		log.Fatal("Redis connect err: ", err)
+	}
+
+	fmt.Println("Connected to Redis successfully!", pong)
+	return rdb
+}
+
 var _ = InitConfig()
 var DB *mongo.Client = InitDB()
+var RDB *redis.Client = InitRDB()
 
 // getting database collections
 func GetCollection(client *mongo.Client, collectionName string) *mongo.Collection {

@@ -57,15 +57,23 @@ mongo
 ```
 设置集群
 ```sh
-rs.initiate({_id:'rs0', members: [{_id:0, host: 'mongo1'},{_id:1, host: 'mongo2'}]})
+rs.initiate({_id:'rs0', members: [{_id:0, host: 'mongo1'},{_id:1, host: 'mongo2'},{_id:2, host: 'mongo3'}]})
 ```
 
 设置hosts
 ```sh
 sudo vim /etc/hosts
 ```
+
 粘贴以下内容
 ```sh
 127.0.0.1       mongo1
 127.0.0.1       mongo2
+```
+
+### 其他
+
+重新设置副本集
+```sh
+rs.reconfig({_id:'rs0', members: [{_id:0, host: 'mongo1'},{_id:1, host: 'mongo2'},{_id:2, host: 'mongo3'}]}, {newForce:true})
 ```
